@@ -1,19 +1,37 @@
-# 全局配置
+"""
+全局配置模块
+- 笔记存储根目录、回收站目录、资源目录
+- 服务端口配置
+- 启动时目录初始化
+"""
 import os
-from pathlib import Path
 
-# 笔记根目录（可自定义路径，默认在项目同级创建notes文件夹）
-BASE_DIR = Path(__file__).resolve().parent
-NOTE_ROOT_PATH = BASE_DIR.parent / "GrowPlan-Notes"
-ASSETS_DIR_NAME = "assets"
-RECYCLE_DIR_NAME = ".recycle"
+# ── 路径配置 ──────────────────────────────────────────────
+# 笔记根目录：所有 .md 笔记文件存放在此目录下
+NOTES_ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "notes")
 
-# 服务配置
-SERVER_HOST = "127.0.0.1"
-SERVER_PORT = 8000
+# 回收站目录：删除的笔记移入此处，支持恢复
+RECYCLE_DIR = os.path.join(NOTES_ROOT, ".recycle")
 
-# 初始化目录
-def init_dirs():
-    NOTE_ROOT_PATH.mkdir(exist_ok=True)
-    (NOTE_ROOT_PATH / ASSETS_DIR_NAME).mkdir(exist_ok=True)
-    (NOTE_ROOT_PATH / RECYCLE_DIR_NAME).mkdir(exist_ok=True)
+# 资源目录：上传的图片等静态资源存储在此
+ASSETS_DIR = os.path.join(NOTES_ROOT, "assets")
+
+# ── 服务配置 ──────────────────────────────────────────────
+# FastAPI 服务监听端口
+PORT = 8000
+
+# 服务监听地址（0.0.0.0 允许外部访问）
+HOST = "0.0.0.0"
+
+
+def init_directories() -> None:
+    """
+    初始化应用所需的目录结构：
+    - notes/           → 笔记根目录
+    - notes/.recycle/  → 回收站目录
+    - notes/assets/    → 上传资源目录
+
+    若目录已存在则跳过，不会抛出异常。
+    """
+    for directory in [NOTES_ROOT, RECYCLE_DIR, ASSETS_DIR]:
+        os.makedirs(directory, exist_ok=True)

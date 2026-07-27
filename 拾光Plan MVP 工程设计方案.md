@@ -31,7 +31,7 @@
 ### 2. 本地存储目录结构
 所有数据集中存放在自定义的笔记根目录（如 `D:/ShiGuangPlan-Notes`），结构如下：
 ```
-ShiGuangPlan-Notes/
+GrowPlan-Notes/
 ├── *.md                   # 正常笔记文件，文件名 = 笔记标题
 ├── assets/                # 统一存放笔记插入的图片资源
 │   ├── xxx.png
@@ -46,7 +46,7 @@ ShiGuangPlan-Notes/
 ## 三、后端 FastAPI 工程设计
 ### 1. 项目目录结构
 ```
-shiguang-plan-server/
+grow-plan-server/
 ├── main.py                # 项目入口，注册路由、托管静态资源
 ├── config.py              # 全局配置：笔记根目录、服务端口等
 ├── schemas.py             # Pydantic 数据模型定义
@@ -94,7 +94,7 @@ shiguang-plan-server/
 
 ### 2. 项目目录结构（App Router 模式）
 ```
-shiguang-plan-web/
+grow-plan-web/
 ├── app/
 │   ├── layout.tsx         # 全局布局，三栏结构、主题Provider
 │   ├── page.tsx           # 首页，动态渲染欢迎页/编辑页

@@ -5,9 +5,17 @@
  * - 未选择笔记：显示欢迎引导页
  * - 已选择笔记：渲染 TipTap 所见即所得 Markdown 编辑器
  */
+import { Ma_Shan_Zheng } from "next/font/google";
 import { Notebook } from "lucide-react";
 import { useNoteStore } from "@/store/useNoteStore";
 import TiptapEditor from "@/components/editor/TiptapEditor";
+
+/** 副标题书法字体（马山正行书） */
+const subtitleFont = Ma_Shan_Zheng({
+  weight: "400",
+  subsets: ["latin"],
+  display: "swap",
+});
 
 export default function Home(): React.ReactElement {
   const currentId: string | null = useNoteStore((s) => s.currentId);
@@ -25,11 +33,13 @@ export default function Home(): React.ReactElement {
             />
           </div>
           {/* 引导文案 */}
-          <h2 className="text-xl font-medium text-neutral-500 dark:text-neutral-400">
+          <h2 className="text-2xl font-medium text-neutral-500 dark:text-neutral-400">
             拾光Plan
           </h2>
-          <p className="mt-2 text-base text-neutral-400 dark:text-neutral-500">
-            选择或创建一篇笔记，开始记录灵感
+          <p
+            className={`mt-2 text-lg text-neutral-400 dark:text-neutral-500 ${subtitleFont.className}`}
+          >
+            拾取星光，记录成长
           </p>
         </div>
       </div>

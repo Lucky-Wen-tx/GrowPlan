@@ -5,13 +5,13 @@
 - Markdown 文件导入、图片上传
 - 路径安全校验：所有文件操作限制在笔记根目录内，防止路径穿越攻击
 - 文件名校验：自动过滤 Windows 非法字符
+- 标题存储：使用 YAML frontmatter 的 title 字段（兼容旧格式 # 一级标题兜底）
 """
 import os
 import re
 import shutil
 import uuid
 from datetime import datetime
-from typing import Optional
 
 from config import NOTES_ROOT, RECYCLE_DIR, ASSETS_DIR
 from schemas import NoteCreate, NoteUpdate, NoteSummary, NoteDetail
@@ -19,6 +19,9 @@ from schemas import NoteCreate, NoteUpdate, NoteSummary, NoteDetail
 # ── 常量 ──────────────────────────────────────────────────
 # Windows 文件名非法字符正则
 _WINDOWS_ILLEGAL_RE = re.compile(r'[<>:"/\\|?*]')
+
+# YAML frontmatter 正则（匹配文件开头 ---\n...\n--- 块）
+_FRONTMATTER_RE = re.compile(r'^---\s*\n(.*?)\n---\s*\n', re.DOTALL)
 
 # 允许上传的图片 MIME 类型
 _ALLOWED_IMAGE_TYPES = {
@@ -114,49 +117,103 @@ def _read_file_metadata(file_path: str) -> dict[str, datetime]:
     }
 
 
+# ═══════════════════════════════════════════════════════════
+# Frontmatter 工具函数
+# ═══════════════════════════════════════════════════════════
+
+def _parse_frontmatter(content: str) -> tuple[dict[str, str], str]:
+    """
+    解析 YAML frontmatter。
+    返回 (metadata_dict, body_content)。
+    若文件不以 frontmatter 开头，返回 ({}, content)。
+    """
+    match = _FRONTMATTER_RE.match(content)
+    if match:
+        metadata: dict[str, str] = {}
+        for line in match.group(1).strip().split('\n'):
+            if ':' in line:
+                key, _, value = line.partition(':')
+                # 去除首尾空白和引号
+                metadata[key.strip()] = value.strip().strip('"').strip("'")
+        return metadata, content[match.end():]
+    return {}, content
+
+
+def _build_frontmatter(title: str) -> str:
+    """构建仅包含 title 字段的 frontmatter 块"""
+    return f"---\ntitle: {title}\n---\n\n"
+
+
+def _strip_frontmatter(content: str) -> str:
+    """去除 frontmatter，返回正文部分"""
+    _, body = _parse_frontmatter(content)
+    return body
+
+
 def _extract_title(file_path: str, fallback: str) -> str:
     """
-    从 .md 文件内容中提取第一个一级标题（# 开头）作为显示标题。
-    若文件中没有一级标题，则使用 fallback（通常为文件名）。
+    从 .md 文件中提取显示标题：
+    1. 优先从 frontmatter 的 title 字段读取
+    2. 兜底：旧格式正文第一个 # 一级标题
+    3. 最后回退：使用 fallback（通常为文件名）
     """
     try:
         with open(file_path, "r", encoding="utf-8") as f:
-            for line in f:
-                stripped = line.strip()
-                # 匹配 "# Title" 但不匹配 "## SubTitle"
-                if stripped.startswith("# ") and not stripped.startswith("## "):
-                    return stripped[2:].strip()
+            content = f.read()
+        metadata, body = _parse_frontmatter(content)
+        if 'title' in metadata and metadata['title']:
+            return metadata['title']
+        # 旧格式兜底：正文第一个 # 一级标题
+        for line in body.split('\n'):
+            stripped = line.strip()
+            if stripped.startswith("# ") and not stripped.startswith("## "):
+                return stripped[2:].strip()
     except (OSError, UnicodeDecodeError):
         pass
     return fallback
 
 
-def _update_first_heading(content: str, new_title: str) -> str:
+def _extract_title_from_content(content: str, fallback: str) -> str:
+    """同 _extract_title，但从内容字符串而非文件路径提取"""
+    metadata, body = _parse_frontmatter(content)
+    if 'title' in metadata and metadata['title']:
+        return metadata['title']
+    for line in body.split('\n'):
+        stripped = line.strip()
+        if stripped.startswith("# ") and not stripped.startswith("## "):
+            return stripped[2:].strip()
+    return fallback
+
+
+def _strip_first_heading(text: str) -> str:
     """
-    将 Markdown 内容中的第一个一级标题替换为新的标题文本。
-    如果没有一级标题，则在开头插入一个。
+    移除正文开头的第一个 # 一级标题行及紧随的空行。
+    用于旧格式笔记迁移到 frontmatter 时清理正文中的旧标题。
     """
-    lines = content.split("\n")
+    lines = text.split('\n')
     for i, line in enumerate(lines):
         stripped = line.strip()
         if stripped.startswith("# ") and not stripped.startswith("## "):
-            # 保留原有缩进
-            indent = line[: len(line) - len(line.lstrip())]
-            lines[i] = f"{indent}# {new_title}"
-            return "\n".join(lines)
-
-    # 内容中没有一级标题 → 在开头插入
-    return f"# {new_title}\n\n{content}"
+            # 移除标题行及其后连续空行
+            j = i + 1
+            while j < len(lines) and lines[j].strip() == '':
+                j += 1
+            return '\n'.join(lines[:i] + lines[j:])
+    return text
 
 
 def _build_note_detail(note_id: str, file_path: str, content: str) -> NoteDetail:
-    """构建 NoteDetail 响应的辅助函数"""
+    """
+    构建 NoteDetail 响应。
+    返回给前端的 content 已去除 frontmatter，编辑器看到的始终是纯净正文。
+    """
     meta = _read_file_metadata(file_path)
     title = _extract_title(file_path, note_id)
+    body = _strip_frontmatter(content)
     return NoteDetail(
         id=note_id,
         title=title,
-        content=content,
+        content=body,
         **meta,
     )
 
@@ -216,7 +273,7 @@ def create_note(data: NoteCreate) -> NoteDetail:
     创建新笔记：
     1. 使用安全化后的标题作为 .md 文件名
     2. 若文件已存在，追加 8 位随机后缀避免覆盖
-    3. 初始内容为 "# 标题\n\n"
+    3. 内容使用 frontmatter 存储标题，正文初始为空
     """
     safe_title = _sanitize_filename(data.title)
     file_path = _resolve_safe_path(NOTES_ROOT, f"{safe_title}.md")
@@ -227,8 +284,8 @@ def create_note(data: NoteCreate) -> NoteDetail:
         safe_title = f"{safe_title}_{suffix}"
         file_path = _resolve_safe_path(NOTES_ROOT, f"{safe_title}.md")
 
-    # 写入初始内容：以用户输入的标题作为一级标题
-    initial_content = f"# {data.title}\n\n"
+    # 初始内容：frontmatter 存标题，正文为空
+    initial_content = _build_frontmatter(data.title)
     with open(file_path, "w", encoding="utf-8") as f:
         f.write(initial_content)
 
@@ -238,29 +295,57 @@ def create_note(data: NoteCreate) -> NoteDetail:
 def update_note(note_id: str, data: NoteUpdate) -> NoteDetail:
     """
     更新笔记：
-    - 若仅修改内容：直接覆写文件
-    - 若修改了标题：同步更新文件内一级标题 + 重命名文件
+    - 所有写入统一使用 frontmatter 格式（旧格式笔记自动迁移）
+    - 修改标题时同步重命名 .md 文件
+    - 返回给前端的 content 不含 frontmatter
     """
     old_path = _resolve_safe_path(NOTES_ROOT, f"{note_id}.md")
 
     if not os.path.isfile(old_path):
         raise FileNotFoundError(f"笔记不存在: {note_id}")
 
-    # 读取当前内容
+    # 读取当前文件内容
     with open(old_path, "r", encoding="utf-8") as f:
         current_content = f.read()
 
-    new_id = note_id
-    new_content = data.content if data.content is not None else current_content
+    # ── 确定标题 ──────────────────────────────────────────
+    # 若前端传了标题则使用，否则从现有文件中提取
+    effective_title: str = (
+        data.title
+        if data.title is not None
+        else _extract_title_from_content(current_content, note_id)
+    )
 
-    if data.title is not None and data.title != note_id:
-        # 标题变更 → 同步更新内容中的一级标题 + 重命名文件
+    # ── 确定正文（去除 frontmatter 的纯净正文）────────────
+    metadata, current_body = _parse_frontmatter(current_content)
+    # 旧格式笔记（无 frontmatter）首次保存时，去掉正文中的 # 标题行
+    # 注意：前端发回的 data.content 也可能包含旧格式标题行（首次 GET 时未剥离），
+    # 因此新旧 body 都需处理，确保迁移后正文纯净
+    if not metadata:
+        if current_body.strip():
+            current_body = _strip_first_heading(current_body)
+        new_body_raw: str = data.content if data.content is not None else current_body
+        if new_body_raw.strip():
+            new_body_raw = _strip_first_heading(new_body_raw)
+        new_body = new_body_raw
+    else:
+        new_body = data.content if data.content is not None else current_body
+
+    # ── 拼接完整文件内容（frontmatter + 正文）────────────
+    new_full_content: str = _build_frontmatter(effective_title) + new_body
+
+    # ── 判断是否需要重命名文件 ────────────────────────────
+    new_id: str = note_id
+    title_changed: bool = (
+        data.title is not None
+        and _sanitize_filename(data.title) != note_id
+    )
+
+    if title_changed:
         new_id = _sanitize_filename(data.title)
-        new_content = _update_first_heading(new_content, data.title)
-
         new_path = _resolve_safe_path(NOTES_ROOT, f"{new_id}.md")
 
-        # 若新路径已被占用（且不是原文件），追加后缀
+        # 新路径已被其他文件占用 → 追加随机后缀
         if new_path != old_path and os.path.exists(new_path):
             suffix = uuid.uuid4().hex[:8]
             new_id = f"{new_id}_{suffix}"
@@ -268,16 +353,16 @@ def update_note(note_id: str, data: NoteUpdate) -> NoteDetail:
 
         # 写入新文件，删除旧文件
         with open(new_path, "w", encoding="utf-8") as f:
-            f.write(new_content)
+            f.write(new_full_content)
         os.remove(old_path)
         file_path = new_path
     else:
-        # 仅内容变更 → 直接覆写
+        # 文件名未变 → 原地覆写
         with open(old_path, "w", encoding="utf-8") as f:
-            f.write(new_content)
+            f.write(new_full_content)
         file_path = old_path
 
-    return _build_note_detail(new_id, file_path, new_content)
+    return _build_note_detail(new_id, file_path, new_full_content)
 
 
 # ═══════════════════════════════════════════════════════════
@@ -373,7 +458,7 @@ def import_markdown(file_content: bytes, original_filename: str) -> NoteDetail:
     导入外部 .md 文件为笔记：
     1. 以原始文件名（去掉 .md 后缀）作为笔记 ID
     2. 解码文件内容（优先 UTF-8，失败则尝试 GBK）
-    3. 写入笔记根目录
+    3. 自动规范化到 frontmatter 格式
     """
     # 从文件名提取基础名称
     base_name = os.path.splitext(original_filename)[0]
@@ -397,10 +482,21 @@ def import_markdown(file_content: bytes, original_filename: str) -> NoteDetail:
     except UnicodeDecodeError:
         content = file_content.decode("gbk", errors="replace")
 
-    with open(file_path, "w", encoding="utf-8") as f:
-        f.write(content)
+    # 规范化到 frontmatter 格式
+    metadata, body = _parse_frontmatter(content)
+    if metadata:
+        # 已有 frontmatter → 保持不变
+        final_content = content
+    else:
+        # 无 frontmatter → 提取标题并规范化
+        title = _extract_title_from_content(content, base_name)
+        body = _strip_first_heading(body)
+        final_content = _build_frontmatter(title) + body
 
-    return _build_note_detail(safe_name, file_path, content)
+    with open(file_path, "w", encoding="utf-8") as f:
+        f.write(final_content)
+
+    return _build_note_detail(safe_name, file_path, final_content)
 
 
 def upload_image(file_content: bytes, original_filename: str) -> dict[str, str]:

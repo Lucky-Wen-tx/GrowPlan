@@ -25,6 +25,11 @@ body {
   min-height: 100vh;
 }
 
+/* ── 编辑器行距覆写（prose 默认 1.75 偏阅读排版，此处调整为编辑场景）─── */
+.prose :where(p, li, blockquote) {
+  line-height: 1.2;
+}
+
 /* ── 自定义滚动条（浅色主题）───────────────────────────────── */
 ::-webkit-scrollbar {
   width: 6px;

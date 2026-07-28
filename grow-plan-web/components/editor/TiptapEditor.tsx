@@ -40,8 +40,8 @@ export default function TiptapEditor(): React.ReactElement {
     (s) => s.setCurrentContent,
   );
 
-  // ── 防抖自动保存（内容变更后 1 秒自动保存到后端）─────────────
-  useAutoSave(currentId, currentContent);
+  // ── 防抖自动保存（标题或内容变更后 1 秒自动保存到后端）─────
+  useAutoSave(currentId, currentTitle, currentContent);
 
   // ── 上一次渲染时的笔记 ID，用于在 effect 中检测笔记切换 ──────
   const prevNoteIdRef = useRef<string | null>(null);

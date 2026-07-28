@@ -82,7 +82,7 @@ export default function Sidebar(): React.ReactElement {
         <button
           type="button"
           onClick={handleCreate}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-base font-medium rounded-xl border border-[#d7d7d7] bg-neutral-100 text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700 dark:border-neutral-700 transition-colors"
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-base font-medium rounded-xl border border-neutral-300 bg-neutral-100 text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700 dark:border-neutral-700 transition-colors"
         >
           <PenLine size={16} />
           新建笔记
@@ -101,7 +101,7 @@ export default function Sidebar(): React.ReactElement {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="搜索笔记…"
-            className="w-full pl-8 pr-3 py-2 text-sm rounded-lg border border-[#d7d7d7] bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-200 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 outline-none transition-all"
+            className="w-full pl-8 pr-3 py-2 text-sm rounded-lg border border-neutral-300 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-200 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 outline-none transition-all"
           />
         </div>
       </div>
@@ -132,8 +132,8 @@ export default function Sidebar(): React.ReactElement {
                     onClick={() => handleSelect(note.id)}
                     className={`w-full text-left px-4 py-2.5 rounded-xl transition-all font-normal ${
                       isActive
-                        ? "bg-[#efefef] dark:bg-neutral-800 shadow-[-1px_-1px_2px_rgba(255,255,255,0.8),0_2px_4px_rgba(0,0,0,0.06)] font-medium"
-                        : "hover:bg-[#efefef] dark:hover:bg-neutral-900 border-transparent"
+                        ? "bg-neutral-100 dark:bg-neutral-800 font-medium"
+                        : "hover:bg-neutral-100 dark:hover:bg-neutral-900 border-transparent"
                     }`}
                   >
                     {/* 标题行：图标 + 标题 */}

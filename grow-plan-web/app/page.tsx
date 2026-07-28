@@ -18,10 +18,10 @@ export default function Home(): React.ReactElement {
       <div className="flex items-center justify-center h-full">
         <div className="text-center select-none">
           {/* 图标 */}
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-brand-50 dark:bg-brand-950 mb-5">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-neutral-100 dark:bg-neutral-800 mb-5">
             <Notebook
               size={40}
-              className="text-brand-300 dark:text-brand-700"
+              className="text-neutral-300 dark:text-neutral-500"
             />
           </div>
           {/* 引导文案 */}

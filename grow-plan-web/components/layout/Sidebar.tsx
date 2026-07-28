@@ -5,8 +5,8 @@
  * - 顶部：新建笔记按钮（window.prompt 输入标题 → api.create → 刷新列表并选中）
  * - 下方：笔记列表（从 store 读取，点击切换当前笔记，高亮选中项）
  */
-import { useEffect, useCallback } from "react";
-import { Plus, FileText } from "lucide-react";
+import { useEffect, useCallback, useState, useMemo } from "react";
+import { PenLine, FileText, Search } from "lucide-react";
 import { useNoteStore } from "@/store/useNoteStore";
 import * as api from "@/lib/api";
 import type { NoteItem } from "@/types/note";
@@ -17,6 +17,20 @@ export default function Sidebar(): React.ReactElement {
   const currentId: string | null = useNoteStore((s) => s.currentId);
   const fetchNoteList = useNoteStore((s) => s.fetchNoteList);
   const selectNote = useNoteStore((s) => s.selectNote);
+
+  // ── 搜索状态 ──────────────────────────────────────────────
+  const [searchQuery, setSearchQuery] = useState<string>("");
+
+  // ── 前端实时过滤：按标题模糊匹配 ──────────────────────────
+  const filteredList = useMemo<NoteItem[]>(() => {
+    if (!searchQuery.trim()) {
+      return noteList;
+    }
+    const keyword = searchQuery.trim().toLowerCase();
+    return noteList.filter((note) =>
+      note.title.toLowerCase().includes(keyword),
+    );
+  }, [noteList, searchQuery]);
 
   // 组件挂载时拉取笔记列表
   useEffect(() => {
@@ -61,64 +75,65 @@ export default function Sidebar(): React.ReactElement {
     [currentId, selectNote],
   );
 
-  // ── 格式化时间为相对友好的显示 ────────────────────────────
-  const formatTime = (iso: string): string => {
-    const date: Date = new Date(iso);
-    const now: Date = new Date();
-    const diffMs: number = now.getTime() - date.getTime();
-    const diffMin: number = Math.floor(diffMs / 60000);
-
-    if (diffMin < 1) return "刚刚";
-    if (diffMin < 60) return `${diffMin} 分钟前`;
-    const diffHour: number = Math.floor(diffMin / 60);
-    if (diffHour < 24) return `${diffHour} 小时前`;
-    const diffDay: number = Math.floor(diffHour / 24);
-    if (diffDay < 7) return `${diffDay} 天前`;
-
-    // 超过一周显示完整日期
-    return date.toLocaleDateString("zh-CN", {
-      month: "short",
-      day: "numeric",
-    });
-  };
-
   return (
-    <aside className="w-64 shrink-0 flex flex-col border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
+    <aside className="w-64 shrink-0 flex flex-col border-r border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950">
       {/* ── 新建笔记按钮区 ─────────────────────────────────── */}
-      <div className="p-3">
+      <div className="p-4 pb-2">
         <button
           type="button"
           onClick={handleCreate}
-          className="w-full flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg bg-gray-900 text-white hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200 transition-colors"
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-base font-medium rounded-xl border border-[#d7d7d7] bg-neutral-100 text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700 dark:border-neutral-700 transition-colors"
         >
-          <Plus size={16} />
+          <PenLine size={16} />
           新建笔记
         </button>
       </div>
 
+      {/* ── 搜索框 ─────────────────────────────────────────── */}
+      <div className="px-4 pb-3">
+        <div className="relative">
+          <Search
+            size={14}
+            className="absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400 dark:text-neutral-500"
+          />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="搜索笔记…"
+            className="w-full pl-8 pr-3 py-2 text-sm rounded-lg border border-[#d7d7d7] bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-200 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 outline-none transition-all"
+          />
+        </div>
+      </div>
+
       {/* ── 分割线 ─────────────────────────────────────────── */}
-      <div className="mx-3 border-t border-gray-100 dark:border-gray-800" />
+      <div className="mx-4 border-t border-neutral-100 dark:border-neutral-800" />
 
       {/* ── 笔记列表 ───────────────────────────────────────── */}
-      <nav className="flex-1 overflow-y-auto px-2 py-2">
+      <nav className="flex-1 overflow-y-auto px-4 py-3">
         {noteList.length === 0 ? (
-          /* 空状态 */
-          <p className="px-3 py-8 text-center text-sm text-gray-400 dark:text-gray-500">
+          /* 空状态：没有任何笔记 */
+          <p className="py-8 text-center text-base text-neutral-400 dark:text-neutral-500">
             暂无笔记，点击上方按钮创建
           </p>
+        ) : filteredList.length === 0 ? (
+          /* 空状态：搜索无结果 */
+          <p className="py-8 text-center text-base text-neutral-400 dark:text-neutral-500">
+            未找到匹配的笔记
+          </p>
         ) : (
-          <ul className="space-y-0.5">
-            {noteList.map((note: NoteItem) => {
+          <ul className="space-y-1">
+            {filteredList.map((note: NoteItem) => {
               const isActive: boolean = note.id === currentId;
               return (
                 <li key={note.id}>
                   <button
                     type="button"
                     onClick={() => handleSelect(note.id)}
-                    className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${
+                    className={`w-full text-left px-4 py-2.5 rounded-xl transition-all font-normal ${
                       isActive
-                        ? "bg-gray-100 dark:bg-gray-800"
-                        : "hover:bg-gray-50 dark:hover:bg-gray-900"
+                        ? "bg-[#efefef] dark:bg-neutral-800 shadow-[-1px_-1px_2px_rgba(255,255,255,0.8),0_2px_4px_rgba(0,0,0,0.06)] font-medium"
+                        : "hover:bg-[#efefef] dark:hover:bg-neutral-900 border-transparent"
                     }`}
                   >
                     {/* 标题行：图标 + 标题 */}
@@ -127,24 +142,20 @@ export default function Sidebar(): React.ReactElement {
                         size={14}
                         className={`shrink-0 ${
                           isActive
-                            ? "text-gray-700 dark:text-gray-300"
-                            : "text-gray-400 dark:text-gray-500"
+                            ? "text-neutral-700 dark:text-neutral-300"
+                            : "text-neutral-400 dark:text-neutral-500"
                         }`}
                       />
                       <span
-                        className={`text-sm truncate ${
+                        className={`text-[15px] truncate ${
                           isActive
-                            ? "text-gray-900 dark:text-gray-100 font-medium"
-                            : "text-gray-700 dark:text-gray-300"
+                            ? "text-neutral-800 dark:text-neutral-100 font-bold"
+                            : "text-neutral-700 dark:text-neutral-300"
                         }`}
                       >
                         {note.title}
                       </span>
                     </div>
-                    {/* 更新时间 */}
-                    <p className="mt-1 pl-6 text-xs text-gray-400 dark:text-gray-500">
-                      {formatTime(note.updated_at)}
-                    </p>
                   </button>
                 </li>
               );

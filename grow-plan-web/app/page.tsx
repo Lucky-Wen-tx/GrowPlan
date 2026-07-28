@@ -18,17 +18,17 @@ export default function Home(): React.ReactElement {
       <div className="flex items-center justify-center h-full">
         <div className="text-center select-none">
           {/* 图标 */}
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gray-100 dark:bg-gray-800 mb-4">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-brand-50 dark:bg-brand-950 mb-5">
             <Notebook
-              size={32}
-              className="text-gray-300 dark:text-gray-600"
+              size={40}
+              className="text-brand-300 dark:text-brand-700"
             />
           </div>
           {/* 引导文案 */}
-          <h2 className="text-lg font-medium text-gray-500 dark:text-gray-400">
+          <h2 className="text-xl font-medium text-neutral-500 dark:text-neutral-400">
             拾光Plan
           </h2>
-          <p className="mt-1 text-sm text-gray-400 dark:text-gray-500">
+          <p className="mt-2 text-base text-neutral-400 dark:text-neutral-500">
             选择或创建一篇笔记，开始记录灵感
           </p>
         </div>

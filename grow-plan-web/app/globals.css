@@ -1,6 +1,31 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+/* Tailwind v4 默认使用 prefers-color-scheme 媒体查询，
+   必须显式注册 class 策略才能配合 ThemeProvider 工作 */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ── Tailwind v4 主题配置 ──────────────────────────────────── */
+@theme {
+  /* 品牌色系（低饱和暖金，呼应"拾光"） */
+  --color-brand-50: #fef9f0;
+  --color-brand-100: #fdf0d9;
+  --color-brand-200: #fadba5;
+  --color-brand-300: #f5c26b;
+  --color-brand-400: #eea832;
+  --color-brand-500: #d4891a;
+  --color-brand-600: #a86a14;
+  --color-brand-700: #7d4e0f;
+  --color-brand-800: #52330a;
+  --color-brand-900: #2e1b06;
+  --color-brand-950: #1a0e03;
+
+  /* 全局字体栈 */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+    sans-serif;
+}
+
 /* ── 全局基础样式 ──────────────────────────────────────────── */
 html {
   /* 平滑字体渲染 */
@@ -24,19 +49,19 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #d1d5db; /* gray-300 */
-  border-radius: 3px;
+  background: #d4d4d4; /* neutral-300 */
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af; /* gray-400 */
+  background: #a3a3a3; /* neutral-400 */
 }
 
 /* ── 自定义滚动条（深色主题）───────────────────────────────── */
 .dark ::-webkit-scrollbar-thumb {
-  background: #4b5563; /* gray-600 */
+  background: #525252; /* neutral-600 */
 }
 
 .dark ::-webkit-scrollbar-thumb:hover {
-  background: #6b7280; /* gray-500 */
+  background: #737373; /* neutral-500 */
 }

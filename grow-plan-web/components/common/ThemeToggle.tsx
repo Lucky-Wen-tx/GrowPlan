@@ -35,7 +35,7 @@ export default function ThemeToggle(): React.ReactElement {
       onClick={cycleMode}
       title={label}
       aria-label={label}
-      className="p-1.5 rounded-md text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+      className="p-1.5 rounded-lg text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
     >
       <Icon size={18} />
     </button>

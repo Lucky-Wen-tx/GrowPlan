@@ -22,6 +22,7 @@ import { Markdown } from "tiptap-markdown";
 import { lowlight } from "lowlight";
 import { useNoteStore } from "@/store/useNoteStore";
 import { useAutoSave } from "@/hooks/useAutoSave";
+import StatusBar from "@/components/editor/StatusBar";
 
 /**
  * TipTap 编辑器组件
@@ -121,7 +122,7 @@ export default function TiptapEditor(): React.ReactElement {
   // ── 编辑器未就绪 → 加载占位 ─────────────────────────────────
   if (!editor) {
     return (
-      <div className="flex items-center justify-center h-full text-sm text-gray-400 dark:text-gray-500 select-none">
+      <div className="flex items-center justify-center h-full text-sm text-neutral-400 dark:text-neutral-500 select-none">
         <p>编辑器加载中...</p>
       </div>
     );
@@ -131,7 +132,7 @@ export default function TiptapEditor(): React.ReactElement {
   return (
     <div className="h-full flex flex-col">
       {/* 标题栏 */}
-      <div className="shrink-0 px-8 py-4 border-b border-gray-200 dark:border-gray-800">
+      <div className="shrink-0 px-8 py-5 border-b border-neutral-200 dark:border-neutral-800">
         <input
           type="text"
           value={currentTitle}
@@ -139,7 +140,7 @@ export default function TiptapEditor(): React.ReactElement {
             setCurrentTitle(e.target.value);
           }}
           placeholder="未命名笔记"
-          className="w-full text-xl font-semibold text-gray-900 dark:text-gray-100 bg-transparent placeholder-gray-300 dark:placeholder-gray-600 focus:outline-none"
+          className="w-full text-2xl font-semibold text-neutral-800 dark:text-neutral-100 bg-transparent placeholder-neutral-300 dark:placeholder-neutral-600 focus:outline-none"
           aria-label="笔记标题"
         />
       </div>
@@ -148,6 +149,9 @@ export default function TiptapEditor(): React.ReactElement {
       <div className="flex-1 overflow-y-auto">
         <EditorContent editor={editor} />
       </div>
+
+      {/* 底部状态栏 */}
+      <StatusBar />
     </div>
   );
 }

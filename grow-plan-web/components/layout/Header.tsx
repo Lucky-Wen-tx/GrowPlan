@@ -9,10 +9,10 @@ import ThemeToggle from "@/components/common/ThemeToggle";
 
 export default function Header(): React.ReactElement {
   return (
-    <header className="h-12 shrink-0 flex items-center justify-between px-4 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 select-none">
+    <header className="h-12 shrink-0 flex items-center justify-between px-4 border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 select-none">
       {/* 左侧：品牌标题 */}
       <div className="flex items-center gap-2">
-        <span className="text-lg font-semibold tracking-wide text-gray-800 dark:text-gray-100">
+        <span className="text-xl font-semibold tracking-wide text-neutral-800 dark:text-neutral-100">
           拾光Plan
         </span>
       </div>

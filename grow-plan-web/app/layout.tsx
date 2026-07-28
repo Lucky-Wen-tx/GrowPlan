@@ -24,12 +24,20 @@ export default function RootLayout({
 }): React.ReactElement {
   return (
     <html lang="zh-CN" suppressHydrationWarning>
-      <body className="h-screen flex flex-col bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100">
+      <head>
+        {/* 在 hydration 前同步读取 localStorage，防止深色模式闪烁 */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem("theme");if(t==="dark"||(t==="system"&&window.matchMedia("(prefers-color-scheme:dark)").matches)){document.documentElement.classList.add("dark")}}catch(e){}})()`,
+          }}
+        />
+      </head>
+      <body className="h-screen flex flex-col bg-neutral-50 dark:bg-neutral-950 text-neutral-800 dark:text-neutral-100">
         <ThemeProvider>
           <Header />
           <div className="flex flex-1 overflow-hidden">
             <Sidebar />
-            <main className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-950">
+            <main className="flex-1 overflow-auto bg-neutral-50 dark:bg-neutral-950">
               {children}
             </main>
           </div>

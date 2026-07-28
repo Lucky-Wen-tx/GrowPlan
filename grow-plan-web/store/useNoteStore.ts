@@ -18,6 +18,8 @@ interface NoteStore {
   currentTitle: string;
   /** 当前笔记正文（编辑中实时更新） */
   currentContent: string;
+  /** 最近一次自动保存成功的时间（ISO 8601 字符串） */
+  lastSavedAt: string | null;
 
   // ── 基础 set 方法 ─────────────────────────────────────────
   /** 批量替换笔记列表 */
@@ -28,6 +30,8 @@ interface NoteStore {
   setCurrentTitle: (title: string) => void;
   /** 设置当前笔记正文 */
   setCurrentContent: (content: string) => void;
+  /** 设置最近保存时间 */
+  setLastSavedAt: (time: string | null) => void;
 
   // ── 异步操作 ──────────────────────────────────────────────
   /** 从后端拉取笔记列表并更新 noteList */
@@ -45,12 +49,14 @@ export const useNoteStore = create<NoteStore>((set) => ({
   currentId: null,
   currentTitle: "",
   currentContent: "",
+  lastSavedAt: null,
 
   // ── 基础 set 方法 ─────────────────────────────────────────
   setNoteList: (list: NoteItem[]): void => set({ noteList: list }),
   setCurrentId: (id: string | null): void => set({ currentId: id }),
   setCurrentTitle: (title: string): void => set({ currentTitle: title }),
   setCurrentContent: (content: string): void => set({ currentContent: content }),
+  setLastSavedAt: (time: string | null): void => set({ lastSavedAt: time }),
 
   // ── 异步操作 ──────────────────────────────────────────────
   fetchNoteList: async (): Promise<void> => {

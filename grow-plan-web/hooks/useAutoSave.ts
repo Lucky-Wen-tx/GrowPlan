@@ -15,6 +15,7 @@
  */
 import { useRef, useEffect } from "react";
 import { update } from "@/lib/api";
+import { useNoteStore } from "@/store/useNoteStore";
 
 // ── 保存快照类型（记录上次成功保存时的 noteId + 正文）─────────
 interface SaveSnapshot {
@@ -74,6 +75,8 @@ export function useAutoSave(
         await update(noteId, { content });
         // 保存成功后记录快照
         lastSavedRef.current = { noteId, content };
+        // 同步记录保存时间到 store，供 StatusBar 等组件读取
+        useNoteStore.getState().setLastSavedAt(new Date().toISOString());
       } catch (err: unknown) {
         // 自动保存失败静默处理 —— 避免频繁弹窗打扰用户
         // 下次内容变更时定时器会重新触发保存

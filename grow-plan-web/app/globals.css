@@ -27,7 +27,20 @@ body {
 
 /* ── 编辑器行距覆写（prose 默认 1.75 偏阅读排版，此处调整为编辑场景）─── */
 .prose :where(p, li, blockquote) {
-  line-height: 0.75;
+  line-height: 1.25;
+}
+
+/* ── 编辑器 prose 颜色覆写：减轻标题和加粗的视觉重量 ────────── */
+.prose {
+  /* 浅色模式：标题和加粗使用 neutral-700 替代纯黑 */
+  --tw-prose-headings: #404040;
+  --tw-prose-bold: #404040;
+}
+
+/* 深色模式：标题和加粗使用 neutral-200 替代纯白 */
+.dark .prose {
+  --tw-prose-invert-headings: #e5e5e5;
+  --tw-prose-invert-bold: #e5e5e5;
 }
 
 /* ── 自定义滚动条（浅色主题）───────────────────────────────── */

@@ -19,7 +19,9 @@ import TableRow from "@tiptap/extension-table-row";
 import TableCell from "@tiptap/extension-table-cell";
 import TableHeader from "@tiptap/extension-table-header";
 import { Markdown } from "tiptap-markdown";
-import { lowlight } from "lowlight";
+// lowlight/lib/common 预装了 35+ 种常用编程语言（JS/TS/Python/CSS/JSON/Bash/SQL/HTML 等）
+import { lowlight } from "lowlight/lib/common";
+import { TyporaMarkExtension } from "@/lib/typora-mark-extension";
 import { useNoteStore } from "@/store/useNoteStore";
 import { useAutoSave } from "@/hooks/useAutoSave";
 import StatusBar from "@/components/editor/StatusBar";
@@ -45,6 +47,9 @@ export default function TiptapEditor(): React.ReactElement {
 
   // ── 上一次渲染时的笔记 ID，用于在 effect 中检测笔记切换 ──────
   const prevNoteIdRef = useRef<string | null>(null);
+  // ── 加载内容中标记：防止 setContent 触发的 onUpdate 经 getMarkdown
+  //    往返转换后破坏原始 markdown 格式（加粗/斜体等可能被序列化器丢失）──
+  const isLoadingRef = useRef<boolean>(false);
 
   // ── 初始化编辑器 ────────────────────────────────────────────
   const editor = useEditor({
@@ -59,20 +64,27 @@ export default function TiptapEditor(): React.ReactElement {
       TableRow,
       TableCell,
       TableHeader,
-      // Markdown 导入/导出
+      // Markdown 导入/导出（去掉 html:false，避免干扰加粗/斜体等标记渲染）
       Markdown.configure({
-        // 禁止内联 HTML，保持纯 Markdown
-        html: false,
-        // 换行符转为 <br>
         breaks: true,
+        // 粘贴和复制时自动做 markdown ↔ 富文本转换
+        transformPastedText: true,
+        transformCopiedText: true,
       }),
+      // Typora 风格：光标移入加粗/斜体/删除线/行内代码时显示 markdown 标记符
+      TyporaMarkExtension,
     ],
-    // 初始为空内容，实际内容在 effect 中通过 setContent + parseOptions 加载
+    // 初始为空内容，实际内容在 effect 中通过 setContent 加载
     content: "",
     // 根据当前标题是否为空控制编辑权限
     editable: currentTitle.length > 0 && currentId !== null,
-    // onUpdate：编辑器变更 → 导出 Markdown → 同步到 store
+    // onUpdate：用户编辑时，导出 Markdown 同步到 store
+    // 注意：setContent 加载内容时也会触发 onUpdate，此时跳过，
+    // 防止 getMarkdown() 往返转换破坏原始 markdown 格式
     onUpdate: ({ editor }: { editor: { storage: { markdown: { getMarkdown: () => string } } } }): void => {
+      if (isLoadingRef.current) {
+        return;
+      }
       const markdown: string = editor.storage.markdown.getMarkdown();
       setCurrentContent(markdown);
     },
@@ -104,11 +116,15 @@ export default function TiptapEditor(): React.ReactElement {
     // 回调可能错误地将加载的内容视为"用户编辑"触发多余保存）
     prevNoteIdRef.current = currentId;
 
-    // 通过 parseOptions: { format: 'markdown' } 将 Markdown
-    // 原文解析为 TipTap 文档节点树并加载到编辑器
-    editor.commands.setContent(currentContent, {
-      parseOptions: { format: "markdown" },
-    });
+    // ── 加载 Markdown 内容 ──────────────────────────────
+    // setContent 会同步触发 onUpdate，通过 isLoadingRef 跳过
+    // 避免 getMarkdown() 往返转换破坏原始格式
+    isLoadingRef.current = true;
+    try {
+      editor.commands.setContent(currentContent);
+    } finally {
+      isLoadingRef.current = false;
+    }
   }, [currentId, currentContent, editor]);
 
   // ── 同步 editable 状态 ──────────────────────────────────────

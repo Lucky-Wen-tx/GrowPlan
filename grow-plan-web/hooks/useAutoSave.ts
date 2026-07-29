@@ -53,18 +53,18 @@ export function useAutoSave(
       return;
     }
 
-    // ── 笔记切换 → 清除旧笔记的保存标记 ──────────────────────
-    // 防止新笔记的内容恰好与旧笔记相同时被误判为"已保存"
+    // ── 笔记切换 → 用当前值初始化快照，视为"已保存"状态 ────
+    // 避免切换笔记后自动触发一次无意义的保存请求
     if (
-      lastSavedRef.current !== null &&
+      lastSavedRef.current === null ||
       lastSavedRef.current.noteId !== noteId
     ) {
-      lastSavedRef.current = null;
+      lastSavedRef.current = { noteId, title, content };
+      return;
     }
 
     // ── 标题和内容均未变化 → 跳过，避免重复请求 ──────────────
     if (
-      lastSavedRef.current !== null &&
       lastSavedRef.current.title === title &&
       lastSavedRef.current.content === content
     ) {
@@ -98,9 +98,11 @@ export function useAutoSave(
         useNoteStore.getState().setLastSavedAt(new Date().toISOString());
 
         // 标题变更导致后端重命名文件 → 同步更新 store 中的 ID 并刷新列表
+        // 注意：必须先刷新列表再更新 currentId，否则侧栏渲染时
+        // noteList 仍为旧数据，新旧 ID 大小写不匹配导致选中状态丢失
         if (result.id !== noteId) {
+          await useNoteStore.getState().fetchNoteList();
           useNoteStore.getState().setCurrentId(result.id);
-          useNoteStore.getState().fetchNoteList();
         }
       } catch (err: unknown) {
         // 自动保存失败静默处理 —— 避免频繁弹窗打扰用户

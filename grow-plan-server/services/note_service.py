@@ -345,17 +345,39 @@ def update_note(note_id: str, data: NoteUpdate) -> NoteDetail:
         new_id = _sanitize_filename(data.title)
         new_path = _resolve_safe_path(NOTES_ROOT, f"{new_id}.md")
 
-        # 新路径已被其他文件占用 → 追加随机后缀
-        if new_path != old_path and os.path.exists(new_path):
+        # 仅大小写变化（大小写不敏感文件系统如 Windows / macOS）
+        # new_path == old_path 说明底层文件系统认为它们是同一个文件
+        # 不能直接"写新文件再删旧文件"，因为删的是刚写入的文件
+        if new_path == old_path:
+            # 通过临时文件名实现大小写重命名：old → tmp → NewCase
+            tmp_name = f"{new_id}_{uuid.uuid4().hex[:8]}.md"
+            tmp_path = _resolve_safe_path(NOTES_ROOT, tmp_name)
+            with open(tmp_path, "w", encoding="utf-8") as f:
+                f.write(new_full_content)
+            os.remove(old_path)
+            # 重要：删除旧文件后重新计算 new_path
+            # 否则 Windows 上 realpath 会将其解析为已删除文件的旧大小写
+            new_path = _resolve_safe_path(NOTES_ROOT, f"{new_id}.md")
+            os.rename(tmp_path, new_path)
+            file_path = new_path
+
+        # 新路径已被其他文件占用 → 追加随机后缀避免冲突
+        elif os.path.exists(new_path):
             suffix = uuid.uuid4().hex[:8]
             new_id = f"{new_id}_{suffix}"
             new_path = _resolve_safe_path(NOTES_ROOT, f"{new_id}.md")
+            # 写入新文件，删除旧文件
+            with open(new_path, "w", encoding="utf-8") as f:
+                f.write(new_full_content)
+            os.remove(old_path)
+            file_path = new_path
 
-        # 写入新文件，删除旧文件
-        with open(new_path, "w", encoding="utf-8") as f:
-            f.write(new_full_content)
-        os.remove(old_path)
-        file_path = new_path
+        # 正常重命名（大小写敏感文件系统如 Linux）
+        else:
+            with open(new_path, "w", encoding="utf-8") as f:
+                f.write(new_full_content)
+            os.remove(old_path)
+            file_path = new_path
     else:
         # 文件名未变 → 原地覆写
         with open(old_path, "w", encoding="utf-8") as f:

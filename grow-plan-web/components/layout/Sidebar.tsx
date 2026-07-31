@@ -82,7 +82,22 @@ export default function Sidebar(): React.ReactElement {
         <button
           type="button"
           onClick={handleCreate}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-base font-medium rounded-xl border border-neutral-300 bg-neutral-100 text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700 dark:border-neutral-700 transition-colors"
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-base font-medium rounded-xl
+            border border-neutral-300 dark:border-neutral-700
+            bg-neutral-100 dark:bg-neutral-800
+            text-neutral-700 dark:text-neutral-200
+            /* 默认微弱阴影：营造微浮起感 */
+            shadow-[0_1px_2px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.02)]
+            dark:shadow-[0_1px_2px_rgba(0,0,0,0.2),0_0_0_1px_rgba(255,255,255,0.03)]
+            /* hover：上浮 + 阴影扩散 + 高光环 */
+            hover:-translate-y-px
+            hover:shadow-[0_4px_12px_rgba(0,0,0,0.1),0_0_0_1px_rgba(0,0,0,0.04),0_2px_4px_rgba(0,0,0,0.06)]
+            dark:hover:shadow-[0_4px_12px_rgba(0,0,0,0.35),0_0_0_1px_rgba(255,255,255,0.06),0_2px_4px_rgba(0,0,0,0.2)]
+            /* active：按下归位 + 压缩阴影 + 内凹 */
+            active:translate-y-0
+            active:shadow-[0_1px_2px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.06)]
+            dark:active:shadow-[0_1px_2px_rgba(0,0,0,0.2),inset_0_1px_2px_rgba(0,0,0,0.15)]
+            transition-all duration-200 ease-out"
         >
           <PenLine size={16} />
           新建笔记
@@ -133,7 +148,7 @@ export default function Sidebar(): React.ReactElement {
                     className={`w-full text-left px-4 py-2.5 rounded-xl transition-all font-normal ${
                       isActive
                         ? "bg-neutral-100 dark:bg-neutral-800 font-medium"
-                        : "hover:bg-neutral-100 dark:hover:bg-neutral-900 border-transparent"
+                        : "hover:bg-neutral-100 dark:hover:bg-neutral-800 border-transparent"
                     }`}
                   >
                     {/* 标题行：图标 + 标题 */}
@@ -149,7 +164,7 @@ export default function Sidebar(): React.ReactElement {
                       <span
                         className={`text-[15px] truncate ${
                           isActive
-                            ? "text-neutral-800 dark:text-neutral-100 font-bold"
+                            ? "text-neutral-800 dark:text-neutral-200 font-bold"
                             : "text-neutral-700 dark:text-neutral-300"
                         }`}
                       >

@@ -3,12 +3,12 @@
 /**
  * 主页面
  * - 未选择笔记：显示欢迎引导页
- * - 已选择笔记：渲染 TipTap 所见即所得 Markdown 编辑器
+ * - 已选择笔记：渲染 Vditor 所见即所得 Markdown 编辑器
  */
 import { Ma_Shan_Zheng } from "next/font/google";
 import { Notebook } from "lucide-react";
 import { useNoteStore } from "@/store/useNoteStore";
-import TiptapEditor from "@/components/editor/TiptapEditor";
+import VditorEditor from "@/components/editor/VditorEditor";
 
 /** 副标题书法字体（马山正行书） */
 const subtitleFont = Ma_Shan_Zheng({
@@ -47,5 +47,5 @@ export default function Home(): React.ReactElement {
   }
 
   // ── 已选择笔记 → 编辑器 ──────────────────────────────────
-  return <TiptapEditor />;
+  return <VditorEditor />;
 }

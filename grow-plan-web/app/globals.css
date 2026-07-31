@@ -68,12 +68,6 @@ body {
   background-color: #1f1f1f !important;
 }
 
-.dark .vditor .vditor-toolbar {
-  border-color: #262626; /* neutral-800 */
-  background-color: #2a2a2a;
-  border-top: none !important;
-}
-
 .dark .vditor-content,
 .dark .vditor .vditor-content__container {
   border-bottom: none !important;

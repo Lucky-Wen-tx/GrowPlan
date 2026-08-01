@@ -54,7 +54,7 @@ body {
 
 /* 编辑区统一内边距：Vditor 默认值左右偏大，显式设为均匀 */
 .vditor-reset {
-  padding: 20px 100px !important;
+  padding: 30px 100px !important;
 }
 
 /* 深色模式覆写 */

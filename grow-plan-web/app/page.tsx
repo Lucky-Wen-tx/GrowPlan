@@ -5,8 +5,8 @@
  * - 未选择笔记：显示欢迎引导页
  * - 已选择笔记：渲染 Vditor 所见即所得 Markdown 编辑器
  */
+import Image from "next/image";
 import { Ma_Shan_Zheng } from "next/font/google";
-import { Notebook } from "lucide-react";
 import { useNoteStore } from "@/store/useNoteStore";
 import VditorEditor from "@/components/editor/VditorEditor";
 
@@ -26,10 +26,13 @@ export default function Home(): React.ReactElement {
       <div className="flex items-center justify-center h-full">
         <div className="text-center select-none">
           {/* 图标 */}
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-neutral-100 dark:bg-neutral-800 mb-5">
-            <Notebook
-              size={40}
-              className="text-neutral-300 dark:text-neutral-500"
+          <div className="inline-flex items-center justify-center w-20 h-15 mb-5">
+            <Image
+              src="/ico_index.png"
+              alt="拾光"
+              width={55}
+              height={55}
+              unoptimized
             />
           </div>
           {/* 引导文案 */}

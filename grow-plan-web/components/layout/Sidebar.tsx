@@ -82,7 +82,7 @@ export default function Sidebar(): React.ReactElement {
         <button
           type="button"
           onClick={handleCreate}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-base font-medium rounded-xl border border-neutral-300 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-200 shadow-[0_1px_2px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.02)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.2),0_0_0_1px_rgba(255,255,255,0.03)] hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(0,0,0,0.1),0_0_0_1px_rgba(0,0,0,0.04),0_2px_4px_rgba(0,0,0,0.06)] dark:hover:shadow-[0_4px_12px_rgba(0,0,0,0.35),0_0_0_1px_rgba(255,255,255,0.06),0_2px_4px_rgba(0,0,0,0.2)] active:translate-y-0 active:shadow-[0_1px_2px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.06)] dark:active:shadow-[0_1px_2px_rgba(0,0,0,0.2),inset_0_1px_2px_rgba(0,0,0,0.15)] transition-all duration-200 ease-out"
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-base font-medium rounded-xl cursor-pointer border border-neutral-300 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-200 shadow-[0_1px_2px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.02)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.2),0_0_0_1px_rgba(255,255,255,0.03)] hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(0,0,0,0.1),0_0_0_1px_rgba(0,0,0,0.04),0_2px_4px_rgba(0,0,0,0.06)] dark:hover:shadow-[0_4px_12px_rgba(0,0,0,0.35),0_0_0_1px_rgba(255,255,255,0.06),0_2px_4px_rgba(0,0,0,0.2)] active:translate-y-0 active:shadow-[0_1px_2px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.06)] dark:active:shadow-[0_1px_2px_rgba(0,0,0,0.2),inset_0_1px_2px_rgba(0,0,0,0.15)] transition-all duration-200 ease-out"
         >
           <PenLine size={16} />
           新建笔记
@@ -130,7 +130,7 @@ export default function Sidebar(): React.ReactElement {
                   <button
                     type="button"
                     onClick={() => handleSelect(note.id)}
-                    className={`w-full text-left px-4 py-2.5 rounded-xl transition-all font-normal ${
+                    className={`w-full text-left px-4 py-2.5 rounded-xl transition-all cursor-pointer font-normal ${
                       isActive
                         ? "bg-neutral-100 dark:bg-neutral-800 font-medium"
                         : "hover:bg-neutral-100 dark:hover:bg-neutral-800"

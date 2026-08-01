@@ -5,13 +5,22 @@
  * - 左侧：应用标题「拾光Plan」
  * - 右侧：主题切换按钮（ThemeToggle）+ 预留更多操作位
  */
+import Image from "next/image";
 import ThemeToggle from "@/components/common/ThemeToggle";
 
 export default function Header(): React.ReactElement {
   return (
     <header className="h-12 shrink-0 flex items-center justify-between px-4 bg-white dark:bg-neutral-950 select-none relative z-10 after:absolute after:inset-x-0 after:top-full after:h-1 after:bg-gradient-to-b after:from-black/8 after:to-transparent dark:after:from-black/40">
       {/* 左侧：品牌标题 */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2.5">
+        <Image
+          src="/ico_index.png"
+          alt="拾光"
+          width={28}
+          height={28}
+          className="shrink-0"
+          unoptimized
+        />
         <span className="text-xl font-semibold tracking-wide text-neutral-800 dark:text-neutral-100">
           拾光Plan
         </span>

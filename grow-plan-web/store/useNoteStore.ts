@@ -70,6 +70,8 @@ export const useNoteStore = create<NoteStore>((set) => ({
       currentId: id,
       currentTitle: detail.title,
       currentContent: detail.content,
+      // 初始化保存时间为文件的实际修改时间
+      lastSavedAt: detail.updated_at,
     });
   },
 }));

@@ -284,12 +284,11 @@ def create_note(data: NoteCreate) -> NoteDetail:
         safe_title = f"{safe_title}_{suffix}"
         file_path = _resolve_safe_path(NOTES_ROOT, f"{safe_title}.md")
 
-    # 初始内容：frontmatter 存标题，正文为空
-    initial_content = _build_frontmatter(data.title)
+    # 初始内容为空，标题存于文件名，不在 md 文件中写入
     with open(file_path, "w", encoding="utf-8") as f:
-        f.write(initial_content)
+        f.write("")
 
-    return _build_note_detail(safe_title, file_path, initial_content)
+    return _build_note_detail(safe_title, file_path, "")
 
 
 def update_note(note_id: str, data: NoteUpdate) -> NoteDetail:
@@ -331,8 +330,8 @@ def update_note(note_id: str, data: NoteUpdate) -> NoteDetail:
     else:
         new_body = data.content if data.content is not None else current_body
 
-    # ── 拼接完整文件内容（frontmatter + 正文）────────────
-    new_full_content: str = _build_frontmatter(effective_title) + new_body
+    # ── 拼接新文件内容（仅正文，不写 frontmatter）────────
+    new_full_content: str = new_body
 
     # ── 判断是否需要重命名文件 ────────────────────────────
     new_id: str = note_id

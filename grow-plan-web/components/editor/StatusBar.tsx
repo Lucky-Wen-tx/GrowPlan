@@ -53,23 +53,23 @@ function countChars(text: string): number {
 /**
  * 格式化 ISO 时间为简短显示
  */
-function formatSaveTime(iso: string | null): string {
-  if (!iso) return "尚未保存";
-
+function formatSaveTime(iso: string): string {
   const date: Date = new Date(iso);
   const now: Date = new Date();
-  const diffMs: number = now.getTime() - date.getTime();
-  const diffSec: number = Math.floor(diffMs / 1000);
+  const diffSec: number = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-  if (diffSec < 10) return "刚刚保存";
-  if (diffSec < 60) return `${diffSec} 秒前`;
-  const diffMin: number = Math.floor(diffSec / 60);
-  if (diffMin < 60) return `${diffMin} 分钟前`;
+  // 一分钟内 → "刚刚保存"
+  if (diffSec < 60) return "刚刚保存";
 
-  return date.toLocaleTimeString("zh-CN", {
+  // 超过一分钟 → 显示文件的具体修改日期和时间
+  const formatted = date.toLocaleString("zh-CN", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
   });
+  return `最后修改于 ${formatted}`;
 }
 
 export default function StatusBar(): React.ReactElement | null {
@@ -88,7 +88,7 @@ export default function StatusBar(): React.ReactElement | null {
   );
 
   // ── 未选中笔记 → 不渲染状态栏 ─────────────────────────────
-  if (currentId === null) {
+  if (currentId === null || !lastSavedAt) {
     return null;
   }
 

@@ -46,6 +46,14 @@ body {
 .vditor-toolbar {
   display: none !important;
 }
+/* Vditor 占位文案斜体 */
+.vditor-reset[data-placeholder]::before,
+.vditor-ir pre.vditor-reset::before,
+.vditor [data-placeholder]::before,
+.vditor-reset[placeholder]::before,
+.vditor-placeholder {
+  font-style: italic !important;
+}
 /* Vditor 内部容器底部边框与状态栏 border-t 重合 → 移除 */
 .vditor-content,
 .vditor .vditor-content__container {

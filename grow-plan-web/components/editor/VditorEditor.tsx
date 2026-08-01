@@ -32,7 +32,6 @@ import StatusBar from "@/components/editor/StatusBar";
 export default function VditorEditor(): React.ReactElement {
   // ── 从 store 读取当前笔记状态 ───────────────────────────────
   const currentId: string | null = useNoteStore((s) => s.currentId);
-  const currentTitle: string = useNoteStore((s) => s.currentTitle);
   const currentContent: string = useNoteStore((s) => s.currentContent);
   const setCurrentContent: (content: string) => void = useNoteStore(
     (s) => s.setCurrentContent,
@@ -41,8 +40,8 @@ export default function VditorEditor(): React.ReactElement {
   // ── 主题（用于同步 Vditor theme 选项）───────────────────────
   const { resolved: isDark } = useTheme();
 
-  // ── 防抖自动保存（标题或内容变更后 1 秒自动保存到后端）─────
-  useAutoSave(currentId, currentTitle, currentContent);
+  // ── 防抖自动保存（内容变更后 1 秒自动保存到后端）───────────
+  useAutoSave(currentId, currentContent);
 
   // ── Refs ────────────────────────────────────────────────────
   /** Vditor 实例引用 */
@@ -81,6 +80,7 @@ export default function VditorEditor(): React.ReactElement {
           // ── 模式与外观 ──────────────────────────────────────
           mode: "ir", // 即时渲染模式（类似 Typora）：所见即所得，无工具栏
           theme: isDark ? "dark" : "classic",
+          placeholder: "记录此刻的想法…",
           // 使用 Vditor 官方 CDN 加载语言包、代码高亮样式等静态资源
           cdn: "https://cdn.jsdelivr.net/npm/vditor@3.11.2",
           // Vditor 内部缓存配置（禁用 localStorage 缓存，
@@ -197,7 +197,7 @@ export default function VditorEditor(): React.ReactElement {
     } else {
       vditor.disabled();
     }
-  }, [currentId, currentTitle, editorReady]);
+  }, [currentId, editorReady]);
 
   // ── 渲染 Vditor 编辑器 ──────────────────────────────────────
   // 注意：容器 div（containerRef）必须始终渲染，否则 useEffect 中
@@ -214,7 +214,7 @@ export default function VditorEditor(): React.ReactElement {
         {!editorReady && (
           <div className="absolute inset-0 z-10 flex items-center justify-center bg-neutral-50 dark:bg-neutral-950">
             <p className="text-sm text-neutral-400 dark:text-neutral-500 select-none">
-              编辑器加载中...
+              编辑器正在赶来中...
             </p>
           </div>
         )}

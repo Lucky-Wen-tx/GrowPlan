@@ -20,6 +20,8 @@ import { useEffect, useRef, useState } from "react";
 import Vditor from "vditor";
 // Vditor 自带 CSS（主题、代码高亮等），在组件内按需加载
 import "vditor/dist/index.css";
+// 项目自定义 Vditor 样式覆写（必须排在官方 CSS 之后引入，确保覆盖生效）
+import "./vditor-overrides.css";
 import { useNoteStore } from "@/store/useNoteStore";
 import { useAutoSave } from "@/hooks/useAutoSave";
 import { useTheme } from "@/hooks/useTheme";

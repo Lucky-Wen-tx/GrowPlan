@@ -24,62 +24,9 @@ body {
   min-height: 100vh;
 }
 
-/* ── Vditor 编辑器配色覆写（与应用 neutral 色系融合）────────── */
-/* 亮色模式：面板、编辑区、工具栏统一使用 neutral-50 (#fafafa) */
-.vditor {
-  --panel-background-color: #fafafa;
-  --toolbar-background-color: #f5f5f5;
-}
-
-/* 亮色模式下的编辑区背景 */
-.vditor-content,
-.vditor-reset {
-  background-color: #fafafa !important;
-}
-
-/* 亮色模式：清除 Vditor 外层边框 */
-.vditor {
-  border: none !important;
-  outline: none !important;
-}
-/* 隐藏空工具栏（toolbar: [] 时 Vditor 仍渲染容器元素） */
-.vditor-toolbar {
-  display: none !important;
-}
-/* Vditor 占位文案斜体 */
-.vditor-reset[data-placeholder]::before,
-.vditor-ir pre.vditor-reset::before,
-.vditor [data-placeholder]::before,
-.vditor-reset[placeholder]::before,
-.vditor-placeholder {
-  font-style: italic !important;
-}
-/* Vditor 内部容器底部边框与状态栏 border-t 重合 → 移除 */
-.vditor-content,
-.vditor .vditor-content__container {
-  border-bottom: none !important;
-}
-
-/* 编辑区统一内边距：Vditor 默认值左右偏大，显式设为均匀 */
-.vditor-reset {
-  padding: 30px 100px !important;
-}
-
-/* 深色模式覆写 */
-.dark .vditor {
-  --panel-background-color: #1f1f1f;
-  --toolbar-background-color: #2a2a2a;
-}
-
-.dark .vditor-content,
-.dark .vditor-reset {
-  background-color: #1f1f1f !important;
-}
-
-.dark .vditor-content,
-.dark .vditor .vditor-content__container {
-  border-bottom: none !important;
-}
+/* 注：Vditor 编辑器的样式覆写已迁移至
+   components/editor/vditor-overrides.css（随组件就近存放）。
+   globals.css 仅保留 Tailwind 配置、全局基础样式与全局滚动条。 */
 
 /* ── 自定义滚动条（浅色主题）───────────────────────────────── */
 ::-webkit-scrollbar {

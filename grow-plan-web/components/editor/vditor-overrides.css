@@ -1,0 +1,147 @@
+/**
+ * Vditor 编辑器样式覆写
+ *
+ * 作用：将 Vditor 官方样式与应用 neutral 色系（Tailwind 主题）融合，
+ *      并修正编辑器布局细节。此前这些样式散落在 app/globals.css 中，
+ *      现独立成文件，职责单一、随组件就近存放。
+ *
+ * ⚠️ 引入顺序约束：
+ *   必须在 Vditor 官方 CSS 之后引入（见 VditorEditor.tsx）：
+ *     import "vditor/dist/index.css";   // 官方样式（先）
+ *     import "./vditor-overrides.css";  // 本文件覆写（后）
+ *   保持此顺序，覆写规则才能生效。
+ *
+ * 注意：部分规则刻意保留 !important ——
+ *   Next.js 打包时多来源 CSS 的合并顺序无法 100% 保证，
+ *   !important 保证覆写无论加载顺序如何都优先生效。
+ *   若后续确认某个规则可安全去掉，再谨慎移除并回归测试。
+ */
+
+/* ── 1. 主题变量（通过 CSS 变量驱动 Vditor 配色）────────────── */
+/* 亮色模式：面板、编辑区、工具栏统一使用 neutral-50 (#fafafa) */
+.vditor {
+  --panel-background-color: #fafafa;
+  --toolbar-background-color: #f5f5f5;
+
+  /* 语法标记统一配色：全部改为默认标记的灰（--second-color）。
+     覆盖 Vditor 默认的各标记类型差异化颜色
+     （标题紫 #660e7a / 列表蓝 #0033b3 / 链接绿 / 括号蓝等），
+     让所有语法标记呈现一致的弱化灰。 */
+  --ir-heading-color: var(--second-color);
+  --ir-title-color: var(--second-color);
+  --ir-bi-color: var(--second-color);
+  --ir-link-color: var(--second-color);
+  --ir-bracket-color: var(--second-color);
+  --ir-paren-color: var(--second-color);
+}
+
+/* 深色模式覆写 */
+.dark .vditor {
+  --panel-background-color: #1f1f1f;
+  --toolbar-background-color: #2a2a2a;
+
+  /* 与亮色模式一致：统一为深色主题下的默认灰 */
+  --ir-heading-color: var(--second-color);
+  --ir-title-color: var(--second-color);
+  --ir-bi-color: var(--second-color);
+  --ir-link-color: var(--second-color);
+  --ir-bracket-color: var(--second-color);
+  --ir-paren-color: var(--second-color);
+}
+
+/* ── 2. 容器布局：边框与工具栏 ─────────────────────────────── */
+/* 清除 Vditor 外层边框，与三栏布局融为一体 */
+.vditor {
+  border: none !important;
+  outline: none !important;
+}
+
+/* 隐藏空工具栏（toolbar: [] 时 Vditor 仍渲染容器元素） */
+.vditor-toolbar {
+  display: none !important;
+}
+
+/* Vditor 内部容器底部边框与状态栏 border-t 重合 → 移除 */
+.vditor-content,
+.vditor .vditor-content__container {
+  border-bottom: none !important;
+}
+
+/* ── 3. 编辑区外观：背景与内边距 ───────────────────────────── */
+/* 亮色模式下的编辑区背景 */
+.vditor-content,
+.vditor-reset {
+  background-color: #fafafa !important;
+}
+
+/* 深色模式下的编辑区背景 */
+.dark .vditor-content,
+.dark .vditor-reset {
+  background-color: #1f1f1f !important;
+}
+
+/* 深色模式下同样移除容器底部边框 */
+.dark .vditor-content,
+.dark .vditor .vditor-content__container {
+  border-bottom: none !important;
+}
+
+/* 编辑区统一内边距：Vditor 默认值左右偏大，显式设为均匀 */
+.vditor-reset {
+  padding: 30px 100px !important;
+}
+
+/* ── 4. 细节样式：占位符等 ─────────────────────────────────── */
+/* 占位文案使用斜体，弱化提示感 */
+.vditor-reset[data-placeholder]::before,
+.vditor-ir pre.vditor-reset::before,
+.vditor [data-placeholder]::before,
+.vditor-reset[placeholder]::before,
+.vditor-placeholder {
+  font-style: italic !important;
+}
+
+/* ── 5. 标题标记：隐藏 Markdown 的 # 符号 ─────────────────── */
+/* IR 模式（即时渲染）默认会显示标题的 # 标记，
+   此处整体隐藏，让标题呈现纯"所见即所得"效果。
+
+   说明：
+   1. 仅作用于标题（.vditor-ir__marker--heading 是标题专用类），
+      列表 / 引用等其它标记不受影响；
+   2. display:none 只影响视觉，不影响 Vditor 内部逻辑 ——
+      其源码通过 querySelector / textContent 读写该元素，
+      CSS 隐藏后这些操作依然有效（如 ⌘+/⌘- 调整标题级别）；
+   3. 如只想隐藏但保留"点击选中整块"的交互，可改为 opacity:0，
+      但会残留标记符号对应的空白间距，视觉不如 display:none 干净。 */
+.vditor-ir .vditor-ir__marker--heading {
+  display: none !important;
+}
+
+/* ── 6. 禁用语法标记的颜色过渡动画 ─────────────────────────── */
+/* Vditor 默认给标记设置了 transition: all .15s ease-in-out：
+   光标移入行内时（节点变为 --expand），标记会从透明渐变显色，
+   产生一个 0.15s 的"颜色浮现"过程。
+   此处禁用过渡，让标记瞬时出现 / 消失，无渐变过程。 */
+.vditor-ir__node .vditor-ir__marker {
+  transition: none !important;
+}
+
+/* ── 7. 语法标记字号放大一号（且不超出文本行高）───────────── */
+/* Vditor 标记符号默认继承所在行的字号（如正文 14px、标题更大）。
+   此处整体放大 15%，让 #、*、-、>、[] 等标记更醒目。
+   使用 em 相对继承字号：标题 / 正文各自等比放大，不会失衡。
+
+   line-height: 1 是关键约束 —— 展开态标记是 display:inline，
+   高度由 line-height 决定（height/max-height 对 inline 无效）。
+   若不压缩行高，标记会继承正文行高（如 1.5），
+   导致标记行框 = 1.5 × 1.15em > 文本行框 1.5 × 1em，把行撑高。
+   设为 1 后标记行框 = 字号(1.15em)，恒不超出文本行高。
+
+   vertical-align: -0.05em 微调下移：
+   标记比文本大 15%，基线对齐时上沿会比文字高约 0.1em，
+   下移 0.05em 让标记与文字视觉居中，避免"顶出"感。 */
+.vditor-ir__node .vditor-ir__marker {
+  font-size: 1.15em;
+  line-height: 1;
+  vertical-align: -0.05em;
+}

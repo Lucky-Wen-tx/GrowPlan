@@ -556,3 +556,105 @@ def upload_image(file_content: bytes, original_filename: str) -> dict[str, str]:
         "path": f"/assets/{unique_name}",
         "url": f"/api/assets/{unique_name}",
     }
+
+
+# ═══════════════════════════════════════════════════════════
+# 孤儿图片清理
+# ═══════════════════════════════════════════════════════════
+# 背景：upload_image 只负责写入，不登记引用；删除笔记/删除图片时
+# 也不清理 assets/。为避免磁盘空间被无用图片逐步占满，提供清理逻辑：
+# 扫描全部笔记（含回收站）Markdown 中引用的 /api/assets/ 文件名，
+# 删除 assets/ 下未被任何笔记引用的图片文件。
+
+# 图片 URL 中文件名部分的正则（兼容绝对 URL 与相对路径）
+_ASSET_URL_RE = re.compile(r"/api/assets/([A-Za-z0-9._-]+)")
+# 兼容旧格式纯相对路径 /assets/<filename>（无 /api 前缀）
+_LEGACY_ASSET_URL_RE = re.compile(r"/assets/([A-Za-z0-9._-]+)")
+
+
+def _collect_referenced_asset_names() -> set[str]:
+    """
+    扫描所有笔记（笔记根目录 + 回收站）的 .md 原始内容，
+    提取其中出现的图片文件名集合。
+
+    回收站笔记也会被计入引用：回收站中的笔记仍可能被恢复，
+    若提前删除了它引用的图片，恢复后图片将无法显示。
+
+    Returns:
+        被引用的 assets 文件名集合（不含目录前缀）
+    """
+    referenced: set[str] = set()
+
+    # 依次扫描笔记根目录与回收站目录下的所有 .md 文件
+    for directory in (NOTES_ROOT, RECYCLE_DIR):
+        if not os.path.isdir(directory):
+            continue
+        for entry in os.listdir(directory):
+            # 只处理 .md 文件，跳过隐藏文件与子目录
+            if not entry.endswith(".md") or entry.startswith("."):
+                continue
+            file_path = os.path.join(directory, entry)
+            if not os.path.isfile(file_path):
+                continue
+            try:
+                with open(file_path, "r", encoding="utf-8") as f:
+                    content = f.read()
+            except (OSError, UnicodeDecodeError):
+                # 单个文件读取失败不影响整体清理，跳过该文件
+                print(f"[Cleanup] 读取笔记失败，跳过: {entry}")
+                continue
+            # 两种路径格式都收集（集合天然去重）
+            referenced.update(_ASSET_URL_RE.findall(content))
+            referenced.update(_LEGACY_ASSET_URL_RE.findall(content))
+
+    return referenced
+
+
+def cleanup_orphan_images() -> dict[str, object]:
+    """
+    清理 assets/ 下未被任何笔记引用的孤儿图片。
+
+    触发时机：
+    1. 服务启动时自动执行一次（见 main.py startup）
+    2. 手动调用 POST /api/images/cleanup
+
+    Returns:
+        {
+            "message": str,
+            "total_images": assets 目录中的图片总数,
+            "deleted_images": 本次删除的孤儿图片数,
+            "referenced_images": 仍被引用的图片数,
+            "deleted_files": 被删除的图片文件名列表,
+        }
+    """
+    referenced: set[str] = _collect_referenced_asset_names()
+    all_assets: list[str] = []
+    deleted: list[str] = []
+
+    if os.path.isdir(ASSETS_DIR):
+        for entry in os.listdir(ASSETS_DIR):
+            # 只处理文件，跳过隐藏文件与子目录
+            if entry.startswith("."):
+                continue
+            file_path = os.path.join(ASSETS_DIR, entry)
+            if not os.path.isfile(file_path):
+                continue
+            all_assets.append(entry)
+            # 未被任何笔记引用 → 删除
+            if entry not in referenced:
+                try:
+                    # 沿用路径安全校验（虽然文件名来自 listdir，但保持一致防御）
+                    resolved = _resolve_safe_path(ASSETS_DIR, entry)
+                    os.remove(resolved)
+                    deleted.append(entry)
+                except OSError as e:
+                    # 单个文件删除失败不中断整体清理
+                    print(f"[Cleanup] 删除图片失败 {entry}: {e}")
+
+    return {
+        "message": "孤儿图片清理完成",
+        "total_images": len(all_assets),
+        "deleted_images": len(deleted),
+        "referenced_images": len(set(all_assets) & referenced),
+        "deleted_files": deleted,
+    }

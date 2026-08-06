@@ -9,6 +9,8 @@ import type { NoteItem, NoteDetail, NoteUpdateResult } from "@/types/note";
 // ── 常量 ──────────────────────────────────────────────────────
 /** 后端 API 基地址 */
 const BASE_URL = "http://localhost:8000/api";
+/** 后端服务源地址（图片上传返回的是相对路径 /api/assets/...，需拼接源地址） */
+const ORIGIN = new URL(BASE_URL).origin;
 
 // ═══════════════════════════════════════════════════════════════
 // 内部请求封装
@@ -99,4 +101,47 @@ export async function update(
       body: JSON.stringify(data),
     },
   );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 图片上传 / Markdown 导入接口
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * 上传图片到后端存储
+ * POST /api/images/upload（multipart/form-data，字段名 file）
+ *
+ * 后端返回 { url: "/api/assets/xxx.png" }，为相对路径；
+ * 此处拼接后端源地址返回完整 URL，供编辑器直接渲染。
+ *
+ * @param file - 用户粘贴/拖入的图片文件
+ * @returns 完整图片 URL（形如 http://localhost:8000/api/assets/xxx.png）
+ */
+export async function uploadImage(file: File): Promise<string> {
+  // 注意：body 直接传 FormData，不要手动设置 Content-Type，
+  // 浏览器会自动附带 multipart boundary
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const data = await request<{ url: string }>(`${BASE_URL}/images/upload`, {
+    method: "POST",
+    body: formData,
+  });
+  return `${ORIGIN}${data.url}`;
+}
+
+/**
+ * 导入一篇 Markdown 文件为笔记
+ * POST /api/notes/import（multipart/form-data，字段名 file）
+ *
+ * @param file - 用户选择的 .md 文件
+ * @returns 导入后创建的笔记详情
+ */
+export async function importMarkdown(file: File): Promise<NoteDetail> {
+  const formData = new FormData();
+  formData.append("file", file);
+  return request<NoteDetail>(`${BASE_URL}/notes/import`, {
+    method: "POST",
+    body: formData,
+  });
 }

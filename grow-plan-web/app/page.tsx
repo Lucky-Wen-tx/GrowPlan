@@ -3,12 +3,12 @@
 /**
  * 主页面
  * - 未选择笔记：显示欢迎引导页
- * - 已选择笔记：渲染 Vditor 所见即所得 Markdown 编辑器
+ * - 已选择笔记：渲染 Milkdown 所见即所得 Markdown 编辑器
  */
 import Image from "next/image";
 import { Ma_Shan_Zheng } from "next/font/google";
 import { useNoteStore } from "@/store/useNoteStore";
-import VditorEditor from "@/components/editor/VditorEditor";
+import MilkdownEditor from "@/components/editor/MilkdownEditor";
 
 /** 副标题书法字体（马山正行书） */
 const subtitleFont = Ma_Shan_Zheng({
@@ -50,5 +50,5 @@ export default function Home(): React.ReactElement {
   }
 
   // ── 已选择笔记 → 编辑器 ──────────────────────────────────
-  return <VditorEditor />;
+  return <MilkdownEditor />;
 }

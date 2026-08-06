@@ -1,0 +1,62 @@
+/**
+ * Milkdown（Crepe）编辑器样式覆写
+ *
+ * 作用：将 Crepe frame 主题与应用 neutral 色系（Tailwind 主题）融合，
+ *      并统一编辑区布局与占位符样式。此前这些职责由 vditor-overrides.css
+ *      承担，现按新编辑器的选择器与 CSS 变量体系重写。
+ *
+ * ⚠️ 引入顺序约束：
+ *   必须在 Milkdown 官方 CSS 之后引入（见 MilkdownEditor.tsx）：
+ *     import "@milkdown/crepe/theme/common/style.css";  // 组件基础样式（先）
+ *     import "@milkdown/crepe/theme/frame.css";         // 亮色主题（先）
+ *     import "./milkdown-overrides.css";               // 本文件覆写（后）
+ *   保持此顺序，覆写规则才能生效。
+ *
+ * 暗色模式说明：
+ *   frame.css 亮色主题的全部颜色都由 .milkdown 作用域下的
+ *   --crepe-color-* 变量驱动。因此无需额外引入 frame-dark.css，
+ *   只需在 .dark .milkdown 下覆盖同一组变量（值取自官方 frame-dark），
+ *   即可随应用 <html class="dark"> 即时切换，无需 JS 干预。
+ */
+
+/* ── 1. 亮色主题变量：与应用配色融合 ───────────────────────── */
+/* 编辑区背景与页面一致（neutral-50 #fafafa）；字体改用应用字体栈 */
+.milkdown {
+  --crepe-color-background: #fafafa;
+  --crepe-font-default: var(--font-sans);
+  --crepe-font-code: ui-monospace, SFMono-Regular, Menlo, Consolas,
+    "Courier New", monospace;
+}
+
+/* ── 2. 暗色主题变量覆盖（值取自官方 frame-dark）──────────── */
+/* 背景用应用深色 #1f1f1f（与页面 neutral-950 体系保持一致） */
+.dark .milkdown {
+  --crepe-color-background: #1f1f1f;
+  --crepe-color-on-background: #e6e6e6;
+  --crepe-color-surface: #121212;
+  --crepe-color-surface-low: #1c1c1c;
+  --crepe-color-on-surface: #d1d1d1;
+  --crepe-color-on-surface-variant: #a9a9a9;
+  --crepe-color-outline: #757575;
+  --crepe-color-primary: #b5b5b5;
+  --crepe-color-secondary: #4d4d4d;
+  --crepe-color-on-secondary: #d6d6d6;
+  --crepe-color-inverse: #e5e5e5;
+  --crepe-color-on-inverse: #2a2a2a;
+  --crepe-color-inline-code: #ff6666;
+  --crepe-color-error: #ff6666;
+  --crepe-color-hover: #232323;
+  --crepe-color-selected: #2f2f2f;
+  --crepe-color-inline-area: #2b2b2b;
+}
+
+/* ── 3. 编辑区内边距：与 Vditor 一致的书写宽度 ─────────────── */
+/* Crepe 内容根节点为 .ProseMirror，设置左右留白让正文居中阅读 */
+.milkdown .ProseMirror {
+  padding: 30px 100px;
+}
+
+/* ── 4. 占位符样式：斜体弱化提示感（同 Vditor 版本）────────── */
+.milkdown .crepe-placeholder {
+  font-style: italic;
+}

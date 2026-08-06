@@ -33,8 +33,11 @@ app.add_middleware(
 # ── 启动事件 ──────────────────────────────────────────────
 @app.on_event("startup")
 async def startup() -> None:
-    """应用启动时初始化所需的目录结构"""
+    """应用启动时初始化目录结构，并清理一次未被引用的孤儿图片"""
     init_directories()
+    result = note_service.cleanup_orphan_images()
+    if result["deleted_images"] > 0:
+        print(f"🧹 启动清理孤儿图片: 删除 {result['deleted_images']} 张")
 
 
 # ═══════════════════════════════════════════════════════════
@@ -177,6 +180,18 @@ async def upload_image(file: UploadFile = File(...)):
         raise HTTPException(status_code=403, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"上传失败: {e}")
+
+
+@app.post("/api/images/cleanup")
+async def cleanup_images():
+    """
+    手动清理未被任何笔记引用的孤儿图片。
+    服务启动时也会自动执行一次，此接口供按需手动触发。
+    """
+    try:
+        return note_service.cleanup_orphan_images()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"清理失败: {e}")
 
 
 # ═══════════════════════════════════════════════════════════

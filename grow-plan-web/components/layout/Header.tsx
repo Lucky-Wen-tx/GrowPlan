@@ -3,12 +3,88 @@
 /**
  * 顶部导航栏
  * - 左侧：应用标题「拾光Plan」
- * - 右侧：主题切换按钮（ThemeToggle）+ 预留更多操作位
+ * - 右侧：导入 / 导出 / 主题切换按钮
+ *
+ * 导入/导出说明：
+ * - 导入：选择 .md 文件 → 调后端 /api/notes/import → 刷新列表并选中新笔记
+ * - 导出：纯前端操作 —— 将当前笔记的 Markdown 字符串下载为 .md 文件，
+ *   不经过后端（内容已在 store 中）
  */
+import { useCallback, useRef } from "react";
 import Image from "next/image";
+import { Upload, Download } from "lucide-react";
 import ThemeToggle from "@/components/common/ThemeToggle";
+import { useNoteStore } from "@/store/useNoteStore";
+import { importMarkdown } from "@/lib/api";
+
+/** 与 ThemeToggle 一致的图标按钮样式，保证视觉统一 */
+const ICON_BTN_CLASS =
+  "cursor-pointer p-1.5 rounded-lg text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors";
 
 export default function Header(): React.ReactElement {
+  // ── store 状态：当前笔记信息 + 列表刷新/选中方法 ──────────────
+  const currentId: string | null = useNoteStore((s) => s.currentId);
+  const currentTitle: string = useNoteStore((s) => s.currentTitle);
+  const currentContent: string = useNoteStore((s) => s.currentContent);
+  const fetchNoteList = useNoteStore((s) => s.fetchNoteList);
+  const selectNote = useNoteStore((s) => s.selectNote);
+
+  /** 隐藏的文件选择器（点击导入按钮时触发） */
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // ── 导入：打开文件选择器 ──────────────────────────────────
+  const handleImportClick = useCallback((): void => {
+    fileInputRef.current?.click();
+  }, []);
+
+  // ── 导入：文件选择后上传后端并刷新列表 ────────────────────
+  const handleFileChange = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
+      const file: File | undefined = e.target.files?.[0];
+      // 先清空 input 值，保证再次选择同一文件也能触发 change
+      e.target.value = "";
+      if (!file) {
+        return;
+      }
+      try {
+        const detail = await importMarkdown(file);
+        // 刷新列表并自动选中导入的笔记，让用户立刻看到导入结果
+        await fetchNoteList();
+        await selectNote(detail.id);
+      } catch (err: unknown) {
+        const message: string =
+          err instanceof Error ? err.message : "导入失败，请稍后重试";
+        window.alert(message);
+      }
+    },
+    [fetchNoteList, selectNote],
+  );
+
+  // ── 导出：将当前笔记下载为 .md 文件（纯前端）──────────────
+  const handleExport = useCallback((): void => {
+    if (currentId === null) {
+      return;
+    }
+    // 标题清洗掉文件名非法字符（Windows/Linux 通用）
+    const safeTitle: string =
+      currentTitle.replace(/[\\/:*?"<>|]/g, "_").trim() || "note";
+    const blob: Blob = new Blob([currentContent], {
+      type: "text/markdown;charset=utf-8",
+    });
+    const url: string = URL.createObjectURL(blob);
+    const link: HTMLAnchorElement = document.createElement("a");
+    link.href = url;
+    link.download = `${safeTitle}.md`;
+    // 需挂载到文档中，Firefox 等浏览器才支持触发下载
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }, [currentId, currentTitle, currentContent]);
+
+  // 未选中笔记时禁用导出（无可导出的内容）
+  const exportDisabled: boolean = currentId === null;
+
   return (
     <header className="h-12 shrink-0 flex items-center justify-between px-4 bg-white dark:bg-neutral-950 select-none relative z-10 after:absolute after:inset-x-0 after:top-full after:h-1 after:bg-gradient-to-b after:from-black/8 after:to-transparent dark:after:from-black/40">
       {/* 左侧：品牌标题 */}
@@ -26,8 +102,42 @@ export default function Header(): React.ReactElement {
         </span>
       </div>
 
-      {/* 右侧：操作按钮区 */}
+      {/* 右侧：导入 / 导出 / 主题切换 */}
       <div className="flex items-center gap-2">
+        {/* 隐藏的文件选择器：接受 .md / .markdown 文件 */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".md,.markdown,text/markdown"
+          className="hidden"
+          onChange={handleFileChange}
+        />
+
+        {/* 导入按钮 */}
+        <button
+          type="button"
+          onClick={handleImportClick}
+          title="导入 Markdown 笔记"
+          aria-label="导入 Markdown 笔记"
+          className={ICON_BTN_CLASS}
+        >
+          <Upload size={18} />
+        </button>
+
+        {/* 导出按钮 */}
+        <button
+          type="button"
+          onClick={handleExport}
+          disabled={exportDisabled}
+          title={exportDisabled ? "请先选择一篇笔记" : "导出当前笔记为 Markdown"}
+          aria-label="导出当前笔记为 Markdown"
+          className={`${ICON_BTN_CLASS} ${
+            exportDisabled ? "opacity-40 cursor-not-allowed" : ""
+          }`}
+        >
+          <Download size={18} />
+        </button>
+
         <ThemeToggle />
       </div>
     </header>

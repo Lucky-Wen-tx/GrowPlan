@@ -10,12 +10,13 @@
  * - 导出：纯前端操作 —— 将当前笔记的 Markdown 字符串下载为 .md 文件，
  *   不经过后端（内容已在 store 中）
  */
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import Image from "next/image";
 import { Upload, Download } from "lucide-react";
 import ThemeToggle from "@/components/common/ThemeToggle";
 import { useNoteStore } from "@/store/useNoteStore";
 import { importMarkdown } from "@/lib/api";
+import { buildPortableMarkdown } from "@/lib/exportMarkdown";
 
 /** 与 ThemeToggle 一致的图标按钮样式，保证视觉统一 */
 const ICON_BTN_CLASS =
@@ -31,6 +32,8 @@ export default function Header(): React.ReactElement {
 
   /** 隐藏的文件选择器（点击导入按钮时触发） */
   const fileInputRef = useRef<HTMLInputElement>(null);
+  /** 导出进行中标记：用于禁用按钮，防止重复点击与重复下载 */
+  const [isExporting, setIsExporting] = useState<boolean>(false);
 
   // ── 导入：打开文件选择器 ──────────────────────────────────
   const handleImportClick = useCallback((): void => {
@@ -61,29 +64,44 @@ export default function Header(): React.ReactElement {
   );
 
   // ── 导出：将当前笔记下载为 .md 文件（纯前端）──────────────
-  const handleExport = useCallback((): void => {
-    if (currentId === null) {
+  // 导出的内容会先把引用的后端图片转成 base64 内嵌，
+  // 生成自包含文件 —— 换机器 / 发他人也能正常显示图片。
+  const handleExport = useCallback(async (): Promise<void> => {
+    if (currentId === null || isExporting) {
       return;
     }
-    // 标题清洗掉文件名非法字符（Windows/Linux 通用）
-    const safeTitle: string =
-      currentTitle.replace(/[\\/:*?"<>|]/g, "_").trim() || "note";
-    const blob: Blob = new Blob([currentContent], {
-      type: "text/markdown;charset=utf-8",
-    });
-    const url: string = URL.createObjectURL(blob);
-    const link: HTMLAnchorElement = document.createElement("a");
-    link.href = url;
-    link.download = `${safeTitle}.md`;
-    // 需挂载到文档中，Firefox 等浏览器才支持触发下载
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  }, [currentId, currentTitle, currentContent]);
+    setIsExporting(true);
+    try {
+      // 下载引用的图片 → base64 内嵌，生成自包含 Markdown
+      const portableContent: string =
+        await buildPortableMarkdown(currentContent);
 
-  // 未选中笔记时禁用导出（无可导出的内容）
-  const exportDisabled: boolean = currentId === null;
+      // 标题清洗掉文件名非法字符（Windows/Linux 通用）
+      const safeTitle: string =
+        currentTitle.replace(/[\\/:*?"<>|]/g, "_").trim() || "note";
+      const blob: Blob = new Blob([portableContent], {
+        type: "text/markdown;charset=utf-8",
+      });
+      const url: string = URL.createObjectURL(blob);
+      const link: HTMLAnchorElement = document.createElement("a");
+      link.href = url;
+      link.download = `${safeTitle}.md`;
+      // 需挂载到文档中，Firefox 等浏览器才支持触发下载
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err: unknown) {
+      const message: string =
+        err instanceof Error ? err.message : "导出失败，请稍后重试";
+      window.alert(message);
+    } finally {
+      setIsExporting(false);
+    }
+  }, [currentId, currentTitle, currentContent, isExporting]);
+
+  // 未选中笔记或正在导出时禁用导出按钮
+  const exportDisabled: boolean = currentId === null || isExporting;
 
   return (
     <header className="h-12 shrink-0 flex items-center justify-between px-4 bg-white dark:bg-neutral-950 select-none relative z-10 after:absolute after:inset-x-0 after:top-full after:h-1 after:bg-gradient-to-b after:from-black/8 after:to-transparent dark:after:from-black/40">
@@ -124,18 +142,28 @@ export default function Header(): React.ReactElement {
           <Upload size={18} />
         </button>
 
-        {/* 导出按钮 */}
+        {/* 导出按钮（自包含导出：图片内嵌 base64） */}
         <button
           type="button"
           onClick={handleExport}
           disabled={exportDisabled}
-          title={exportDisabled ? "请先选择一篇笔记" : "导出当前笔记为 Markdown"}
+          title={
+            isExporting
+              ? "正在导出..."
+              : exportDisabled
+                ? "请先选择一篇笔记"
+                : "导出当前笔记为 Markdown（图片内嵌，可独立使用）"
+          }
           aria-label="导出当前笔记为 Markdown"
           className={`${ICON_BTN_CLASS} ${
             exportDisabled ? "opacity-40 cursor-not-allowed" : ""
           }`}
         >
-          <Download size={18} />
+          {isExporting ? (
+            <span className="inline-block w-[18px] text-center">…</span>
+          ) : (
+            <Download size={18} />
+          )}
         </button>
 
         <ThemeToggle />

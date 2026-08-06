@@ -145,3 +145,28 @@ export async function importMarkdown(file: File): Promise<NoteDetail> {
     body: formData,
   });
 }
+
+/**
+ * 将后端图片资源地址转为 base64 data URL
+ * 用于自包含导出：下载图片字节后内嵌进 Markdown，
+ * 导出的 .md 文件可在无后端环境（换机器/发他人）下正常显示图片。
+ *
+ * @param url - 后端图片地址，支持绝对 URL 或相对路径（如 /api/assets/xxx.png）
+ * @returns base64 data URL（如 data:image/png;base64,...）
+ * @throws 下载失败（HTTP 非 2xx）时抛出 Error
+ */
+export async function assetToDataUrl(url: string): Promise<string> {
+  // 兼容相对路径：无协议头时拼接后端源地址
+  const fullUrl: string = url.startsWith("/") ? `${ORIGIN}${url}` : url;
+  const response: Response = await fetch(fullUrl);
+  if (!response.ok) {
+    throw new Error(`图片下载失败 (HTTP ${response.status})`);
+  }
+  const blob: Blob = await response.blob();
+  return new Promise<string>((resolve, reject) => {
+    const reader: FileReader = new FileReader();
+    reader.onload = (): void => resolve(reader.result as string);
+    reader.onerror = (): void => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
+}

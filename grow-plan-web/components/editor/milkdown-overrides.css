@@ -60,3 +60,31 @@
 .milkdown .crepe-placeholder {
   font-style: italic;
 }
+
+/* ── 5. 代码块：去除 CodeMirror 默认「选中行」高亮 ─────────── */
+/* 说明：代码块内部由 CodeMirror 渲染，其基础主题会为光标所在行
+   追加背景色（.cm-activeLine），并给对应行号追加背景色
+   （.cm-activeLineGutter）。该样式由 CodeMirror 运行时注入，
+   不在静态 CSS 产物中，故需在此用更高优先级覆写为透明，
+   使代码块外观不随光标位置变化（行号背景保持原色）。 */
+.milkdown .milkdown-code-block .cm-editor .cm-activeLine,
+.milkdown .milkdown-code-block .cm-editor.cm-focused .cm-activeLine {
+  background: transparent;
+}
+
+.milkdown .milkdown-code-block .cm-editor .cm-activeLineGutter,
+.milkdown .milkdown-code-block .cm-editor.cm-focused .cm-activeLineGutter {
+  background: transparent;
+}
+
+/* ── 6. 光标加粗为默认的 2 倍 ──────────────────────────────── */
+/* 说明：代码块内的 CodeMirror 启用了 drawSelection，其自定义光标
+   .cm-cursor / .cm-dropCursor 默认 border-left 为 1.2px，
+   视觉偏细。这里加粗为 2px（约默认的 2 倍），并同步将
+   margin-left 调整为 -1px（光标宽的一半），保证光标仍居中于
+   字符间。原生光标（主编辑器 / 输入框）由系统宽度决定，不受此规则影响。 */
+.milkdown .cm-editor .cm-cursor,
+.milkdown .cm-editor .cm-dropCursor {
+  border-left-width: 2px;
+  margin-left: -1px;
+}
